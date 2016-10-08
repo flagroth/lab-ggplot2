@@ -44,15 +44,39 @@ library(nycflights13)
 Utiliza las funciones incluidas en el paquete `dplyr`, para responder a las siguientes preguntas:
 
 a) ¿Cuantos vuelos se realizan en total cada mes?
+```{r ejercicio-1a, warning=FALSE}
+flights %>% 
+  group_by(month) %>% 
+  count()
+```
 b) ¿Qué aeropuerto acumula el mayor número de salidas de vuelos en todo el año?
+```{r ejercicio-1b, warning=FALSE}
+flights %>% 
+  group_by(origin) %>% 
+  count() %>% 
+  top_n(1,n)
+```
 c) ¿Qué compañía acumula el mayor número de salida de vuelos en los meses de verano (jun-sep.)?
+```{r ejercicio-1c, warning=FALSE}
+flights %>% 
+  group_by(carrier) %>% 
+  filter(month>=6 & month<=9) %>% 
+  count() %>% 
+  top_n(1,n)
+```
 d) ¿Qué compañia acumula más tiempo de vuelo en todo el año?
+```{r ejercicio-1d, warning=FALSE}
+flights %>% 
+  select(carrier,air_time) %>% 
+  group_by(carrier) %>% 
+  mutate(cum_air=cumsum(air_time)) %>% 
+  select(carrier,cum_air) %>% 
+  arrange(desc(cum_air))
+```
 e) ¿Qué compañía registra los mayores retrasos de salida de sus vuelos?
 ¿Tienen los retrasos alguna correlación con la duración de los vuelos?
+```{r ejercicio-1e, warning=FALSE}
 
-```{r ejercicio-1, warning=FALSE}
-# Introduce aquí el código para generar la respuesta
-# Puedes añadir más chunks si es necesario
 ```
 
 ## Ejercicio 2 (*30 puntos*)
