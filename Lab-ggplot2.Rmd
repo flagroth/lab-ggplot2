@@ -67,11 +67,12 @@ flights %>%
 d) ¿Qué compañia acumula más tiempo de vuelo en todo el año?
 ```{r ejercicio-1d, warning=FALSE}
 flights %>% 
-  select(carrier,air_time) %>% 
-  group_by(carrier) %>% 
-  mutate(cum_air=cumsum(air_time)) %>% 
-  select(carrier,cum_air) %>% 
-  arrange(desc(cum_air))
+  filter(!is.na(air_time)) %>%
+  group_by(carrier) %>%
+  mutate(cum_air=order_by(carrier,cumsum(air_time))) %>%
+  select(carrier,cum_air) %>%
+  arrange(desc(cum_air)) %>%
+  top_n(1,cum_air)
 ```
 e) ¿Qué compañía registra los mayores retrasos de salida de sus vuelos?
 ¿Tienen los retrasos alguna correlación con la duración de los vuelos?
