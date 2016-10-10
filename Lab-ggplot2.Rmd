@@ -86,7 +86,7 @@ flights %>%
 ```
 e) ¿Qué compañía registra los mayores retrasos de salida de sus vuelos?
 La compañía con mayores retrasos (acumulados) es ExpressJet Airlines Inc.
-```{r ejercicio-1e, warning=FALSE}
+```{r ejercicio-1ea, warning=FALSE}
 flights %>% 
   filter(!is.na(air_time)) %>%
   group_by(carrier) %>%
@@ -99,7 +99,7 @@ flights %>%
 ```
 ¿Tienen los retrasos alguna correlación con la duración de los vuelos?
 Según se puede ver en la siguiente gráfica existe una correlación negativa entre los retrasos y el tiempo de vuelo.
-```{r ejercicio-1e, warning=FALSE}
+```{r ejercicio-1eb, warning=FALSE}
 ggplot(data.frame(flights$air_time,flights$dep_delay),
        aes(x=flights$air_time,y=flights$dep_delay)) + 
   geom_smooth(method = 'glm') +
