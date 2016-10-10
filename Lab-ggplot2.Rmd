@@ -44,40 +44,66 @@ library(nycflights13)
 Utiliza las funciones incluidas en el paquete `dplyr`, para responder a las siguientes preguntas:
 
 a) ¿Cuantos vuelos se realizan en total cada mes?
+A continuación se muestra una tabla con los vuelos totales que se realizan cada mes.
 ```{r ejercicio-1a, warning=FALSE}
 flights %>% 
   group_by(month) %>% 
   count()
 ```
 b) ¿Qué aeropuerto acumula el mayor número de salidas de vuelos en todo el año?
+El aeropuerto que más salidas tiene es Newark Liberty International.
 ```{r ejercicio-1b, warning=FALSE}
 flights %>% 
   group_by(origin) %>% 
   count() %>% 
-  top_n(1,n)
+  top_n(1,n) %>%
+  left_join(airports, by = c("origin" = "faa")) %>%
+  select(name,n)
 ```
 c) ¿Qué compañía acumula el mayor número de salida de vuelos en los meses de verano (jun-sep.)?
+La compañía que más salidas realiza en verano es United Air Lines Inc.
 ```{r ejercicio-1c, warning=FALSE}
 flights %>% 
   group_by(carrier) %>% 
   filter(month>=6 & month<=9) %>% 
   count() %>% 
-  top_n(1,n)
+  top_n(1,n)  %>%
+  left_join(airlines) %>%
+  select(name,n)
 ```
 d) ¿Qué compañia acumula más tiempo de vuelo en todo el año?
+La compañía que más tiempo de vuelo acumula en todo el año es United Air Lines Inc.
 ```{r ejercicio-1d, warning=FALSE}
 flights %>% 
   filter(!is.na(air_time)) %>%
   group_by(carrier) %>%
-  mutate(cum_air=order_by(carrier,cumsum(air_time))) %>%
+  mutate(cum_air=cumsum(air_time))  %>%
   select(carrier,cum_air) %>%
   arrange(desc(cum_air)) %>%
-  top_n(1,cum_air)
+  top_n(1,cum_air) %>%
+  left_join(airlines) %>%
+  select(name,cum_air)
 ```
 e) ¿Qué compañía registra los mayores retrasos de salida de sus vuelos?
-¿Tienen los retrasos alguna correlación con la duración de los vuelos?
+La compañía con mayores retrasos (acumulados) es ExpressJet Airlines Inc.
 ```{r ejercicio-1e, warning=FALSE}
-
+flights %>% 
+  filter(!is.na(air_time)) %>%
+  group_by(carrier) %>%
+  mutate(cum_delay=cumsum(dep_delay)) %>%
+  select(carrier,cum_delay) %>%
+  arrange(desc(cum_delay)) %>%
+  top_n(1,cum_delay) %>%
+  left_join(airlines) %>%
+  select(name,cum_delay)
+```
+¿Tienen los retrasos alguna correlación con la duración de los vuelos?
+Según se puede ver en la siguiente gráfica existe una correlación negativa entre los retrasos y el tiempo de vuelo.
+```{r ejercicio-1e, warning=FALSE}
+ggplot(data.frame(flights$air_time,flights$dep_delay),
+       aes(x=flights$air_time,y=flights$dep_delay)) + 
+  geom_smooth(method = 'glm') +
+  labs(x="Duración vuelo",y="Restraso de salida")
 ```
 
 ## Ejercicio 2 (*30 puntos*)
