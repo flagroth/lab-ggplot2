@@ -113,12 +113,17 @@ un gráfico en `ggplot2` de la relación entre distancia de los vuelos y retraso
 para todos los aeropuertos de NYC.
 
 ```{r, warning=FALSE}
-by_tailnum <- group_by(flights, tailnum)
+by_tailnum <- group_by(flights, tailnum, month)
+
 delay <- summarise(by_tailnum,
   count = n(),
   dist = mean(distance, na.rm = TRUE),
   delay = mean(arr_delay, na.rm = TRUE))
+
 delay <- filter(delay, count > 20, dist < 2000)
+
+delay$month <- factor(delay$month)
+levels(delay$month)<-c("ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC")
 
 # Interestingly, the average delay is only slightly related to the
 # average distance flown by a plane.
@@ -149,14 +154,21 @@ nombres del mes.
 basados en los resultados obtenidos para elaborar la respuesta.
 
 ```{r, warning=FALSE}
-# Introduzca aquí el código para generar la respuesta
+ggplot(delay, aes(dist, delay)) +
+  geom_point(aes(size = count), alpha = 1/2) +
+  labs(x="Distancia (millas)", y="Retraso (mins.)") +
+  geom_smooth(method = 'gam') +
+  scale_size_area() +
+  ggtitle("Relación entre distancia y retrasos en los vuelos") +
+  scale_radius(name="Núm. vuelos") +
+  facet_grid(. ~ month)
 ```
 
-*[INTRODUCE AQUÍ LAS CONCLUSIONES]*
+Se observa que normalmente los retrasos se disminuyen en los vuelos que recorren una mayor distancia (correlación negativa), excepto en los meses de verano (julio y agosto), en los que los retrasos aumentan a mayor distancia (correlación positiva).
 
 ## Ejercicio 3 (*20 puntos*)
 
-Representar el retrasos de salida de los vuelos que parten  del aeropuerto JFK 
+Representar los retrasos de salida de los vuelos que parten del aeropuerto JFK 
 (código 'JFK'), desglosado por meses (como en el ejercicio anterior). Se mostrarán solo
 los vuelos domésticos, imponiendo como condición de filtrado de datos:
 `distancia recorrida < 1.000 millas`.
