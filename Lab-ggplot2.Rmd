@@ -1,6 +1,6 @@
 ---
 title: "Ejercicio-ggplot2-dplyr"
-author: "Felipe Ortega, Isaac Martín"
+author: "Felipe Ortega, Isaac Martín y Javier Cano Montero"
 date: "7 de octubre de 2016"
 output: pdf_document
 ---
@@ -44,6 +44,7 @@ library(nycflights13)
 Utiliza las funciones incluidas en el paquete `dplyr`, para responder a las siguientes preguntas:
 
 a) ¿Cuantos vuelos se realizan en total cada mes?
+
 A continuación se muestra una tabla con los vuelos totales que se realizan cada mes.
 ```{r ejercicio-1a, warning=FALSE}
 flights %>% 
@@ -51,6 +52,7 @@ flights %>%
   count()
 ```
 b) ¿Qué aeropuerto acumula el mayor número de salidas de vuelos en todo el año?
+
 El aeropuerto que más salidas tiene es Newark Liberty International.
 ```{r ejercicio-1b, warning=FALSE}
 flights %>% 
@@ -61,6 +63,7 @@ flights %>%
   select(name,n)
 ```
 c) ¿Qué compañía acumula el mayor número de salida de vuelos en los meses de verano (jun-sep.)?
+
 La compañía que más salidas realiza en verano es United Air Lines Inc.
 ```{r ejercicio-1c, warning=FALSE}
 flights %>% 
@@ -72,6 +75,7 @@ flights %>%
   select(name,n)
 ```
 d) ¿Qué compañia acumula más tiempo de vuelo en todo el año?
+
 La compañía que más tiempo de vuelo acumula en todo el año es United Air Lines Inc.
 ```{r ejercicio-1d, warning=FALSE}
 flights %>% 
@@ -85,6 +89,7 @@ flights %>%
   select(name,cum_air)
 ```
 e) ¿Qué compañía registra los mayores retrasos de salida de sus vuelos?
+
 La compañía con mayores retrasos (acumulados) es ExpressJet Airlines Inc.
 ```{r ejercicio-1ea, warning=FALSE}
 flights %>% 
@@ -98,10 +103,21 @@ flights %>%
   select(name,cum_delay)
 ```
 ¿Tienen los retrasos alguna correlación con la duración de los vuelos?
-Según se puede ver en la siguiente gráfica existe una correlación negativa entre los retrasos y el tiempo de vuelo.
+
+Según se puede ver en la siguiente gráfica existe una ligera correlación negativa entre los retrasos y el tiempo de vuelo.
 ```{r ejercicio-1eb, warning=FALSE}
-ggplot(data.frame(flights$air_time,flights$dep_delay),
-       aes(x=flights$air_time,y=flights$dep_delay)) + 
+ggplot(select(flights,air_time,dep_delay),
+       aes(x=flights$air_time,y=flights$dep_delay)) +
+  geom_point() +
+  geom_smooth(method = 'glm') +
+  labs(x="Duración vuelo",y="Restraso de salida")
+```
+
+Se puede ver más claramente si no representamos los puntos de cada vuelo individual.
+
+```{r ejercicio-1ec, warning=FALSE}
+ggplot(select(flights,air_time,dep_delay),
+       aes(x=flights$air_time,y=flights$dep_delay)) +
   geom_smooth(method = 'glm') +
   labs(x="Duración vuelo",y="Restraso de salida")
 ```
@@ -159,11 +175,12 @@ ggplot(delay, aes(dist, delay)) +
   labs(x="Distancia (millas)", y="Retraso (mins.)") +
   geom_smooth(method = 'gam') +
   scale_size_area() +
-  ggtitle("Relación entre distancia y retrasos en los vuelos") +
+  ggtitle("Relación entre distancia \ny retrasos en los vuelos (por meses)") +
   scale_radius(name="Núm. vuelos") +
   facet_grid(. ~ month)
 ```
 
+### Conclusiones
 Se observa que normalmente los retrasos se disminuyen en los vuelos que recorren una mayor distancia (correlación negativa), excepto en los meses de verano (julio y agosto), en los que los retrasos aumentan a mayor distancia (correlación positiva).
 
 ## Ejercicio 3 (*20 puntos*)
@@ -176,16 +193,33 @@ los vuelos domésticos, imponiendo como condición de filtrado de datos:
 ¿Qué conclusiones puedes extraer a la vista de estos gráficos?
 
 ```{r}
-# Introduzca aquí el código para generar la respuesta
+by_tailnum <- group_by(flights, origin, tailnum, month)
+
+delay <- summarise(by_tailnum,
+  count = n(),
+  dist = mean(distance, na.rm = TRUE),
+  delay = mean(dep_delay, na.rm = TRUE))
+
+delay <- filter(delay, origin=="JFK", count > 20, dist < 1000)
+
+delay$month <- factor(delay$month)
+levels(delay$month)<-c("ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC")
+
+# Interestingly, the average delay is only slightly related to the
+# average distance flown by a plane.
+ggplot(delay, aes(dist, delay)) +
+  geom_point(aes(size = count), alpha = 1/2) +
+  labs(x="Distancia (millas)", y="Retraso (mins.)") +
+  geom_smooth(method = 'gam') +
+  scale_size_area() +
+  ggtitle("Relación entre distancia y retrasos  \nen los vuelos domésticos (por meses y origen JFK)") +
+  scale_radius(name="Núm. vuelos") +
+  facet_grid(. ~ month)
 ```
 
-*[INTRODUCE AQUÍ LAS CONCLUSIONES]*
+### Conclusiones
 
-```{r}
-# Introduzca aquí el código para generar la respuesta
-```
-
-*[INTRODUCE AQUÍ LAS CONCLUSIONES]*
+Se observa una clara correlación positiva entre el retraso de salida y la distancia del vuelo.
 
 ## Ejercicio 4 (*20 puntos*)
 Utilizando boxplots (`geom_boxplot`), representar gráficamente una comparativa de los 
@@ -193,7 +227,40 @@ retrasos de salida entre las distintas compañías aéreas, en el mes de diciemb
 aeropuerto de Newark (código 'EWR'). ¿Se observan diferencias notables?
 
 ```{r}
-# Introduzca aquí el código para generar la respuesta
+by_carrier <- group_by(flights, carrier)
+
+from_newark <- filter(by_carrier, origin =="EWR" & month == 12)
+
+delay <- select(from_newark, carrier, dep_delay)
+
+p0 <- ggplot(delay, aes(carrier, dep_delay)) +
+  geom_boxplot(outlier.colour = "red") +
+  labs(x="Aerolíneas",y="Retraso de salida") +
+  ggtitle("Retraso por aerolíneas de Newark en el mes de diciembre")
+
+plot(p0)
 ```
 
-*[INTRODUCE AQUÍ LAS CONCLUSIONES]*
+En la siguiente gráfica nos centraremos en la mayoría de los datos para observar mejor los cuartiles.
+
+```{r}
+ylim1 <- boxplot.stats(delay$dep_delay)$stats[c(1,5)]
+
+p1 <- p0 + coord_cartesian(ylim=ylim1*1.5)
+
+plot(p1)
+```
+
+### Conclusiones
+
+Se observa que la mediana de los retrasos de las aerolíneas que operan en Newark en el mes de diciembre es muy similar y cercana a 0 (no tienen retrasos). 
+
+Los vuelos de Southwest Airlines Co. (WN) tienen más retrasos con 8 minutos de mediana y los de US Airways Inc. (US) salen 3 minutos antes de la hora.
+
+```{r}
+# Summary de WN
+summary(filter(delay,carrier=="WN")[,2])
+# Summary de US
+summary(filter(delay,carrier=="US")[,2])
+```
+
