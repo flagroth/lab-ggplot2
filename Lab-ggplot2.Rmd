@@ -177,7 +177,7 @@ ggplot(delay, aes(dist, delay)) +
   scale_size_area() +
   ggtitle("Relación entre distancia \ny retrasos en los vuelos (por meses)") +
   scale_radius(name="Núm. vuelos") +
-  facet_grid(. ~ month)
+  facet_wrap(~ month, nrow = 2)
 ```
 
 ### Conclusiones
@@ -198,7 +198,7 @@ by_tailnum <- group_by(flights, origin, tailnum, month)
 delay <- summarise(by_tailnum,
   count = n(),
   dist = mean(distance, na.rm = TRUE),
-  delay = mean(dep_delay, na.rm = TRUE))
+  delay = mean(dep_delay, na.rm = TRUE)) %>% filter(!is.na(delay))
 
 delay <- filter(delay, origin=="JFK", count > 20, dist < 1000)
 
@@ -214,7 +214,7 @@ ggplot(delay, aes(dist, delay)) +
   scale_size_area() +
   ggtitle("Relación entre distancia y retrasos  \nen los vuelos domésticos (por meses y origen JFK)") +
   scale_radius(name="Núm. vuelos") +
-  facet_grid(. ~ month)
+  facet_wrap(~ month, nrow = 2)
 ```
 
 ### Conclusiones
@@ -231,7 +231,7 @@ by_carrier <- group_by(flights, carrier)
 
 from_newark <- filter(by_carrier, origin =="EWR" & month == 12)
 
-delay <- select(from_newark, carrier, dep_delay)
+delay <- select(from_newark, carrier, dep_delay) %>% filter(!is.na(dep_delay))
 
 p0 <- ggplot(delay, aes(carrier, dep_delay)) +
   geom_boxplot(outlier.colour = "red") +
